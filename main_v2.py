@@ -1,86 +1,54 @@
-import sys
-import time
-from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from metadatafix import *
 from jsonWork import *
-from move import *
 from errorHandler import *
+from metadatafix import *
+from move import *
 
+path = r"/Users/hannada/Downloads/test"
+working_path = Path(path)
+all_json = get_all_json(working_path)
+all_media = get_all_media(working_path)
+error_json = []
+error_media = []
+processed_media = []
+processed_json = []
 
-
-# ----------------------------------------
-start_time = time.time()
-
-folder_path = Path(r"/Users/hannada/Downloads/test")
-
-# ==========================
-# 1️⃣ Di chuyển file lỗi
-# ==========================
-json_list = get_all_json(folder_path)
-media_list = get_all_media(folder_path)
-valid_media_files = []
-
-for json_file in json_list:
-    json_path = folder_path / json_file
-    try:
-        title = extract_title(json_path)
-    except Exception as e:
-        move_to_error(json_path)
-        continue
-
-    if title not in media_list:
-        move_to_error(str(json_path))
+for json_file in all_json:
+    title = extract_title_not(working_path/json_file)
+    if title in all_media:
+        processed_media.append(title)
+        processed_json.append(json_file)
+        all_media.remove(title)
     else:
-        valid_media_files.append(title)
+        error_json.append(json_file)
 
-# Media không có JSON → lỗi
-error_media = set(media_list) - set(valid_media_files)
-for media_file in error_media:
-    move_to_error(str(folder_path / media_file))
+error_media = all_media[:]
+all_json.clear()
+all_media.clear()
+for  media_file in error_media:
+    name, ext = os.path.splitext(media_file)
+    for i in range(len(name), 0, -1):
+        guess_json = f"{name[:i]}.json"         # tên gốc cắt dần
+        # guess_2 = make_filename_safe(guess_1)
+        if guess_json in error_json:
+            processed_json.append(guess_json)
+            processed_media.append(media_file)
+            break
 
-# Làm mới danh sách sau khi lọc lỗi
-json_list = get_all_json(folder_path)
-media_list = get_all_media(folder_path)
+error_json = [x for x in error_json if x not in processed_json]
+error_media = [x for x in error_media if x not in processed_media]
 
-
-# ==========================
-# 2️⃣ Hàm xử lý từng JSON
-# ==========================
-def handle_json(json_filename):
-    json_path = folder_path / json_filename
-    time_and_title = extract_title_time(str(json_path))
-    media_path = folder_path / time_and_title['title']
-    process_media_lite(int(time_and_title["time"]), str(media_path))
-    return json_filename  # để báo progress
-
-
-# ==========================
-# 3️⃣ Xử lý JSON song song
-# ==========================
-total = len(json_list)
-done = 0
-
-with ThreadPoolExecutor(max_workers=8) as executor:
-    futures = {executor.submit(handle_json, j): j for j in json_list}
-
-    for future in as_completed(futures):
-        done += 1
-        sys.stdout.write(f"\rProgress: {done}/{total}")
-        sys.stdout.flush()
-
-
-# # ==========================
-# # 4️⃣ Xử lý thư mục lỗi
-# # ==========================
-error_dir = folder_path / "error"
-if error_dir.is_dir() and any(error_dir.iterdir()):
-    error_handler_1(folder_path)
-
-
-# ==========================
-# 5️⃣ Kết thúc
-# ==========================
-print(f"\nTổng cộng có {len(json_list)} file JSON.")
-end_time = time.time()
-print(f"Thời gian chạy: {end_time - start_time:.2f} giây")
+print('-----------------------------------')
+print(f"Processed JSON files:, {len(processed_json)}")
+print(processed_json)
+print(f"Processed media files:, {len(processed_media)}")
+print(processed_media)
+print('-----------------------------------')
+print(f"Error JSON files:, {len(error_json)}")
+print(error_json)
+print(f"Error media files:, {len(error_media)}")
+print(error_media)
+print('-----------------------------------')
+print(f"All JSON files:, {len(all_json)}")
+print(all_json)
+print(f"All media files:, {len(all_media)}")
+print(all_media)
