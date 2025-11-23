@@ -3,7 +3,7 @@ import unicodedata
 from pathlib import Path 
 from datetime import datetime
 
-def extract_title(json_path:Path|str):
+def extract_title(json_path:Path|str)->str:
     """
     trích xuất title từ file json
     - đầu vào là Path hoặc string đường dẫn đến file json
@@ -16,7 +16,7 @@ def extract_title(json_path:Path|str):
     # trả về string đã chuẩn hóa NFC
     return unicodedata.normalize("NFC", title)
 
-def extract_title_not(json_path:Path|str):
+def extract_title_not(json_path:Path|str)->str:
     """
     trích xuất title từ file json
     - đầu vào là Path hoặc string đường dẫn đến file json
