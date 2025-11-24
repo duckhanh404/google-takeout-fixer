@@ -2,6 +2,9 @@ import json
 import unicodedata
 from pathlib import Path 
 from datetime import datetime
+import re
+from openpyxl import Workbook
+
 
 def extract_title(json_path:Path|str)->str:
     """
@@ -20,7 +23,7 @@ def extract_title_not(json_path:Path|str)->str:
     """
     trích xuất title từ file json
     - đầu vào là Path hoặc string đường dẫn đến file json
-    - trả về là string đã chuẩn hóa NFC
+    - trả về là string chưa chuẩn hóa NFC
     """
     json_path = Path(json_path)  # đảm bảo luôn là Path
     with json_path.open("r", encoding="utf-8") as f:
@@ -93,9 +96,56 @@ def get_all_media(folder_path:Path|str):
         if file.is_file() and file.suffix.lower() != ".json"
     ]
 
+def is_that_cloned(file_name: str) -> bool:
+    """
+    Kiểm tra tên file có đuôi dạng (số) ngay trước extension hay không.
+    Hỗ trợ cả trường hợp có khoảng trắng: "image (1).jpg"
+    trả về True nếu đúng là có đuôi (số), ngược lại False.
+    Trả về chuỗi "(n)" nếu tên file có dạng (n) ngay trước extension.
+    Nếu không có, trả về 0.
+    """
+    name = Path(file_name).stem
 
+    # Tìm dạng: optional-space + (digits) + end
+    match = re.search(r"\s*\(\d+\)$", name)
+    if match:
+        return match.group().strip()  # return "(2)" (loại bỏ space nếu có)
+    return "original"
+
+def lists_to_excel(output_path="output.xlsx", **kwargs):
+    """
+    Ghi nhiều list vào file Excel.
+    Tên mỗi cột chính là tên biến list được truyền vào.
+    
+    Ví dụ gọi hàm:
+    lists_to_excel(output="out.xlsx", list1=a, list2=b, my_data=c)
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data"
+
+    # Lấy danh sách tên cột (keys) và dữ liệu (values)
+    headers = list(kwargs.keys())
+    columns = list(kwargs.values())
+
+    # Ghi tiêu đề cột
+    for col_idx, header in enumerate(headers, start=1):
+        ws.cell(row=1, column=col_idx, value=header)
+
+    # Tìm số dòng tối đa (list dài nhất)
+    max_len = max(len(col) for col in columns)
+
+    # Ghi dữ liệu
+    for row_idx in range(max_len):
+        for col_idx, col_data in enumerate(columns, start=1):
+            if row_idx < len(col_data):
+                ws.cell(row=row_idx + 2, column=col_idx, value=col_data[row_idx])
+
+    wb.save(output_path)
+    print(f"✔ Đã tạo file Excel: {output_path}")
 
 
 if __name__ == "__main__":
-    test_json = Path("C:/Takeout/Google Photos/2018/.com.google.Chrome.ag4I1L.supplemental-metadat.json")
-
+    test = Path("E:\json")
+    get_all_file_name = [file for file in test.iterdir()]
+    print(len(get_all_file_name))
