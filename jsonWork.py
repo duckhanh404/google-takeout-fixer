@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 from openpyxl import Workbook
-
+import unicodedata
 
 def extract_title(json_path:Path|str)->str:
     """
@@ -144,8 +144,48 @@ def lists_to_excel(output_path="output.xlsx", **kwargs):
     wb.save(output_path)
     print(f"✔ Đã tạo file Excel: {output_path}")
 
+import subprocess
+import json
+from datetime import datetime
+
+def get_media_create_timestamp(path: Path | str) -> int | None:
+    """
+    Lấy MediaCreateDate từ metadata của file và trả về timestamp (int).
+    Trả về None nếu không tìm thấy hoặc lỗi.
+    """
+    
+
+    cmd = ["exiftool",
+           "-j", path]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print("❌ ExifTool error:", result.stderr.strip())
+            return None
+        
+        data = json.loads(result.stdout)[0]
+
+    except Exception as e:
+        print(f"❌ Lỗi đọc metadata: {e}")
+        return None
+
+    media_date = data.get("MediaCreateDate")
+    if not media_date:
+        print("❌ Không có MediaCreateDate trong metadata.")
+        return None
+
+    try:
+        dt = datetime.strptime(media_date, "%Y:%m:%d %H:%M:%S")
+        return int(dt.timestamp())
+    except Exception as e:
+        print(f"❌ Lỗi parse thời gian: {e}")
+        return None
+
 
 if __name__ == "__main__":
-    test = Path("E:\json")
-    get_all_file_name = [file for file in test.iterdir()]
-    print(len(get_all_file_name))
+    
+    test = (r"E:\Takeout\Google Photos\Ảnh từ năm 2019\VID_20190813_210145.mp4")
+    clean_path = unicodedata.normalize("NFC", test)
+    a = get_media_create_timestamp(clean_path)
+    print(a)

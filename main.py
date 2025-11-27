@@ -48,7 +48,7 @@ print(f'error json: {len(error_json)}')
 print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 
-lists_to_excel(output_path="check_errors.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json )
+# lists_to_excel(output_path="check_errors.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json )
 
 # if __name__ == "__main__":
 #     lists_to_excel(
