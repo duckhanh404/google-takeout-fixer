@@ -4,7 +4,8 @@ from pathlib import Path
 from datetime import datetime
 import re
 from openpyxl import Workbook
-import unicodedata
+import subprocess
+from test import normalize_existing_path
 
 def extract_title(json_path:Path|str)->str:
     """
@@ -144,17 +145,12 @@ def lists_to_excel(output_path="output.xlsx", **kwargs):
     wb.save(output_path)
     print(f"✔ Đã tạo file Excel: {output_path}")
 
-import subprocess
-import json
-from datetime import datetime
-
 def get_media_create_timestamp(path: Path | str) -> int | None:
     """
     Lấy MediaCreateDate từ metadata của file và trả về timestamp (int).
     Trả về None nếu không tìm thấy hoặc lỗi.
     """
     
-
     cmd = ["exiftool",
            "-j", path]
 
@@ -170,9 +166,9 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
         print(f"❌ Lỗi đọc metadata: {e}")
         return None
 
-    media_date = data.get("MediaCreateDate")
+    media_date = data.get("ModifyDate")
     if not media_date:
-        print("❌ Không có MediaCreateDate trong metadata.")
+        print("❌ Không có ModifyDate trong metadata.")
         return None
 
     try:
@@ -182,10 +178,25 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
         print(f"❌ Lỗi parse thời gian: {e}")
         return None
 
+# import unicodedata
+
+def check_normalization(s: str):
+    """
+    Trả về dạng unicode của string: 'NFC', 'NFD', hoặc 'Other'
+    """
+    if s == unicodedata.normalize("NFC", s):
+        return "NFC"
+    elif s == unicodedata.normalize("NFD", s):
+        return "NFD"
+    else:
+        return "Other"
+
+
 
 if __name__ == "__main__":
     
-    test = (r"E:\Takeout\Google Photos\Ảnh từ năm 2019\VID_20190813_210145.mp4")
-    clean_path = unicodedata.normalize("NFC", test)
-    a = get_media_create_timestamp(clean_path)
-    print(a)
+    # test = (r"E:\Takeout\Google Photos\Ảnh từ năm 2019\VID_20190813_210145.mp4")
+    # hello = normalize_existing_path(test)
+    # # a = get_media_create_timestamp(yo)
+    # print(a)
+    print(check_normalization("Ảnh từ năm 2019"))
