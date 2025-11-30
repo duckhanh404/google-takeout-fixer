@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from jsonWork import extract_time
+from jsonWork import extract_time, convert_timestamp
 
 
 # =====================================================
@@ -57,14 +57,15 @@ def process_media_lite(timestamp:str, media_path: Path|str)->None:
     Có thể sử dụng cho link string hoặc Path object.
     """
     media_path = Path(media_path)
+    dt = convert_timestamp(timestamp)
     # print(f"-> Setting {media_path.name} to {dt}")
-    write_metadata_with_exiftool(media_path, timestamp)
+    write_metadata_with_exiftool(media_path, dt)
 # =====================================================
 # 3) Test
 # =====================================================
 if __name__ == "__main__":
-    json_path = Path(r"C:\Users\DucKhanhPC\Desktop\2015\IMG_5727.JPG.supplemental-metadata.json")
-    media_path = Path(r"C:\Users\DucKhanhPC\Desktop\2015\IMG_5727.JPG")
+    # json_path = Path(r"C:\Users\DucKhanhPC\Desktop\2015\IMG_5727.JPG.supplemental-metadata.json")
+    media_path = Path(r"C:\Users\DucKhanhPC\Desktop\test 2\Ảnh từ năm 2023\IMG_8479.MP4")
 
-    process_media(json_path, media_path)
-    input("\nPress Enter to exit...")
+    process_media_lite("860154321", media_path)
+    # input("\nPress Enter to exit...")

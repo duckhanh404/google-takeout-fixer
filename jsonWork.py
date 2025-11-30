@@ -55,6 +55,12 @@ def extract_time(json_path:Path|str)->str:
     dt = datetime.fromtimestamp(ts)
     return dt.strftime("%Y:%m:%d %H:%M:%S")
 
+def convert_timestamp(timestamp:int|str)->str:
+    timestamp = int(timestamp)
+    dt = datetime.fromtimestamp(timestamp)
+    return dt.strftime("%Y:%m:%d %H:%M:%S")
+    
+
 def get_all_json(folder_path:Path|str):
     """
     Lấy tất cả file json trong thư mục
@@ -145,41 +151,6 @@ def lists_to_excel(output_path="output.xlsx", **kwargs):
     wb.save(output_path)
     print(f"✔ Đã tạo file Excel: {output_path}")
 
-def get_media_create_timestamp(path: Path | str) -> int | None:
-    """
-    Lấy MediaCreateDate từ metadata của file và trả về timestamp (int).
-    Trả về None nếu không tìm thấy hoặc lỗi.
-    """
-    
-    cmd = ["exiftool",
-           "-j", path]
-
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            print("❌ ExifTool error:", result.stderr.strip())
-            return None
-        
-        data = json.loads(result.stdout)[0]
-
-    except Exception as e:
-        print(f"❌ Lỗi đọc metadata: {e}")
-        return None
-
-    media_date = data.get("ModifyDate")
-    if not media_date:
-        print("❌ Không có ModifyDate trong metadata.")
-        return None
-
-    try:
-        dt = datetime.strptime(media_date, "%Y:%m:%d %H:%M:%S")
-        return int(dt.timestamp())
-    except Exception as e:
-        print(f"❌ Lỗi parse thời gian: {e}")
-        return None
-
-# import unicodedata
-
 def check_normalization(s: str):
     """
     Trả về dạng unicode của string: 'NFC', 'NFD', hoặc 'Other'
@@ -190,13 +161,66 @@ def check_normalization(s: str):
         return "NFD"
     else:
         return "Other"
+    
+def get_media_create_timestamp(path: Path | str) -> int | None:
+    """
+    Lấy MediaCreateDate (sử dụng ModifyDate nếu không có) từ metadata của file và trả về timestamp (int).
+    Tùy chọn -charset filename=utf8 được thêm để xử lý tên file có ký tự Unicode.
+    """
+    
+    path_str = str(path)
+    
+    # 1. Thêm tùy chọn -charset filename=utf8 vào lệnh ExifTool.
+    # 2. Sử dụng shell=True, truyền lệnh dưới dạng CHUỖI VÀ BỌC NGOẶC KÉP ("...") 
+    #    để đảm bảo tính ổn định cho cả KHOẢNG TRẮNG và UNICODE trên Windows.
+    cmd_str = f'exiftool -j -charset filename=utf8 "{path_str}"'
+    
+    try:
+        # CHÚ Ý: Phải đặt shell=True khi truyền chuỗi lệnh
+        result = subprocess.run(
+            cmd_str, 
+            capture_output=True, 
+            text=True, 
+            shell=True,
+            check=True,
+            # Chỉ định encoding để xử lý ký tự có dấu trong output và input/output của Shell
+            encoding="utf-8" 
+        ) 
+        
+        # Lấy dữ liệu từ output JSON
+        data = json.loads(result.stdout)[0]
+        
+    except subprocess.CalledProcessError as e:
+        # Xử lý lỗi khi ExifTool chạy không thành công
+        print(f"❌ ExifTool error (return code {e.returncode}):", e.stderr.strip())
+        return None
+    except Exception as e:
+        # Xử lý các lỗi khác (ví dụ: Lỗi JSON parse)
+        print(f"❌ Lỗi đọc metadata: {e}")
+        return None
+    
+    # --- Phần xử lý thời gian ---
+    # Ưu tiên các trường CreateDate, sau đó là ModifyDate
+    media_date = data.get("MediaCreateDate") or data.get("CreateDate") or data.get("ModifyDate")
 
+    if not media_date:
+        print("❌ Không tìm thấy thông tin thời gian (MediaCreateDate/CreateDate/ModifyDate) trong metadata.")
+        return None
 
-
+    try:
+        # Định dạng thời gian ExifTool trả về thường là "%Y:%m:%d %H:%M:%S"
+        # Cần xử lý cả trường hợp có múi giờ hoặc SubSecTime nếu có
+        # Ở đây tôi dùng định dạng cơ bản nhất. Nếu lỗi, có thể cần điều chỉnh thêm.
+        dt = datetime.strptime(media_date, "%Y:%m:%d %H:%M:%S")
+        return int(dt.timestamp())
+    except Exception as e:
+        print(f"❌ Lỗi parse thời gian: {e}")
+        return None
 if __name__ == "__main__":
     
-    # test = (r"E:\Takeout\Google Photos\Ảnh từ năm 2019\VID_20190813_210145.mp4")
-    # hello = normalize_existing_path(test)
-    # # a = get_media_create_timestamp(yo)
-    # print(a)
-    print(check_normalization("Ảnh từ năm 2019"))
+    # Đường dẫn có khoảng trắng (raw string)
+    test_path = r"C:\Users\DucKhanhPC\Desktop\test 2\Ảnh từ năm 2023\IMG_8479.MP4"
+    
+    # Chạy thử
+    a = get_media_create_timestamp(test_path)
+    print(a)

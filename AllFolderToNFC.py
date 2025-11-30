@@ -25,6 +25,7 @@ def normalize_filenames_to_nfc(folder_path: str | Path):
 
         try:
             path.rename(new_path)
+            print(f'Tên mới: {new_path}')
             renamed_count += 1
         except Exception as e:
             print(f"\n❌ Lỗi khi rename {path}: {e}")
@@ -32,5 +33,5 @@ def normalize_filenames_to_nfc(folder_path: str | Path):
     print(f"\n✔️ Hoàn tất! Đã đổi tên {renamed_count} mục.")
 
 if __name__ == "__main__":
-    target_folder = r"e:\Takeout\Google Photos"
+    target_folder = r"C:\Users\DucKhanhPC\Desktop\test 2"
     normalize_filenames_to_nfc(target_folder)
