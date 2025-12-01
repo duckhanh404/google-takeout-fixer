@@ -6,7 +6,7 @@ from move import *
 
 
 
-path = r'/Users/hannada/Downloads/Bản sao Ảnh từ năm 2018'
+path = r"E:\Takeout\Google Photos\Ảnh từ năm 2019"
 working_path = Path(path)
 all_json = get_all_json(working_path)
 all_media = get_all_media(working_path)
@@ -31,7 +31,7 @@ for json in all_json:
         if guess_title in all_media:
             processed_json.append(json)
             processed_media.append(guess_title)        
-    else:
+    elif suffix == "original":
         # trường hợp title trong file json có xuất hiện trong all_media
         title = extract_title_not(working_path/json)
         if title in all_media:
@@ -50,12 +50,14 @@ print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 # print(error_json)
 # print(error_media)
-# lists_to_excel(output_path="check_errors_1.xlsx", error_json=error_json, error_media=error_media)
-print('-----------------------------------')
-print("Xử lý các file có tên gần giống nhau...")
-for json in error_json:
-    name, ext = os.path.splitext(json)
-    print(name)
+# lists_to_excel(output_path="check_errors_2.xlsx", error_json=error_json, error_media=error_media)
+
+
+# print('-----------------------------------')
+# print("Xử lý các file có tên gần giống nhau...")
+# for json in error_json:
+#     name, ext = os.path.splitext(json)
+#     print(name)
 
 
 
@@ -81,7 +83,7 @@ print(f'error json: {len(error_json)}')
 print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 
-# lists_to_excel(output_path="check_errors.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json )
+lists_to_excel(output_path="check_errors_3.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json )
 
 # if __name__ == "__main__":
 #     lists_to_excel(

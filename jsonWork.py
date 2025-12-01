@@ -103,7 +103,7 @@ def get_all_media(folder_path:Path|str):
         if file.is_file() and file.suffix.lower() != ".json"
     ]
 
-def is_that_cloned(file_name: str) -> bool:
+def is_that_cloned(file_name: str) -> str:
     """
     Kiểm tra tên file có đuôi dạng (số) ngay trước extension hay không.
     Hỗ trợ cả trường hợp có khoảng trắng: "image (1).jpg"
