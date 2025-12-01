@@ -50,7 +50,7 @@ def process_media(json_path: Path|str, media_path: Path|str)->None:
     # print(f"-> Setting {media_path.name} to {dt}")
     write_metadata_with_exiftool(media_path, dt)
 
-def process_media_lite(timestamp:str, media_path: Path|str)->None:
+def process_media_lite(timestamp:str|int, media_path: Path|str)->None:
     """
     Xử lý 1 cặp JSON + ảnh/video (full).
     Đầu vào là timestamp string và file media.

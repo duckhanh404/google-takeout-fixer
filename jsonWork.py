@@ -192,11 +192,11 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
         
     except subprocess.CalledProcessError as e:
         # Xử lý lỗi khi ExifTool chạy không thành công
-        print(f"❌ ExifTool error (return code {e.returncode}):", e.stderr.strip())
+        # print(f"❌ ExifTool error (return code {e.returncode}):", e.stderr.strip())
         return None
     except Exception as e:
         # Xử lý các lỗi khác (ví dụ: Lỗi JSON parse)
-        print(f"❌ Lỗi đọc metadata: {e}")
+        # print(f"❌ Lỗi đọc metadata: {e}")
         return None
     
     # --- Phần xử lý thời gian ---
@@ -204,7 +204,7 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
     media_date = data.get("MediaCreateDate") or data.get("CreateDate") or data.get("ModifyDate")
 
     if not media_date:
-        print("❌ Không tìm thấy thông tin thời gian (MediaCreateDate/CreateDate/ModifyDate) trong metadata.")
+        # print("❌ Không tìm thấy thông tin thời gian (MediaCreateDate/CreateDate/ModifyDate) trong metadata.")
         return None
 
     try:
@@ -212,14 +212,16 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
         # Cần xử lý cả trường hợp có múi giờ hoặc SubSecTime nếu có
         # Ở đây tôi dùng định dạng cơ bản nhất. Nếu lỗi, có thể cần điều chỉnh thêm.
         dt = datetime.strptime(media_date, "%Y:%m:%d %H:%M:%S")
+        print(f"✔ Lấy được thời gian từ metadata: {dt} cho file: {path_str}")
         return int(dt.timestamp())
     except Exception as e:
-        print(f"❌ Lỗi parse thời gian: {e}")
+        # print(f"❌ Lỗi parse thời gian: {e}")
         return None
+
 if __name__ == "__main__":
     
     # Đường dẫn có khoảng trắng (raw string)
-    test_path = r"C:\Users\DucKhanhPC\Desktop\test 2\Ảnh từ năm 2023\IMG_8479.MP4"
+    test_path = r'/Users/hannada/Downloads/test/số điện thoại.mp4'
     
     # Chạy thử
     a = get_media_create_timestamp(test_path)

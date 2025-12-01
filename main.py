@@ -6,7 +6,7 @@ from move import *
 
 
 
-path = r"E:\Takeout\Google Photos\Ảnh từ năm 2019"
+path = r'/Users/hannada/Downloads/Bản sao Ảnh từ năm 2018'
 working_path = Path(path)
 all_json = get_all_json(working_path)
 all_media = get_all_media(working_path)
@@ -32,14 +32,47 @@ for json in all_json:
             processed_json.append(json)
             processed_media.append(guess_title)        
     else:
+        # trường hợp title trong file json có xuất hiện trong all_media
         title = extract_title_not(working_path/json)
         if title in all_media:
             processed_json.append(json)
             processed_media.append(title)
 
+
+# tạo danh sách lỗi (file có trong all nhưng không có trong processed)
 error_json = [x for x in all_json if x not in processed_json]
 error_media = [x for x in all_media if x not in processed_media]
+print(f'Media count: {len(processed_media)}+{len(error_media)}={len(processed_media)+len(error_media)} vs {len(all_media)}')
+print(f'JSON count: {len(processed_json)}+{len(error_json)}={len(processed_json)+len(error_json)} vs {len(all_json)}')
+print(f'processed json: {len(processed_json)}')
+print(f'error json: {len(error_json)}')
+print(f'processed media: {len(processed_media)}')
+print(f'error media: {len(error_media)}')
+# print(error_json)
+# print(error_media)
+# lists_to_excel(output_path="check_errors_1.xlsx", error_json=error_json, error_media=error_media)
+print('-----------------------------------')
+print("Xử lý các file có tên gần giống nhau...")
+for json in error_json:
+    name, ext = os.path.splitext(json)
+    print(name)
 
+
+
+print('-----------------------------------')
+print("Processing error media files that have timestamp...")
+for media in error_media:
+    timestamp = get_media_create_timestamp(working_path/media)
+    if timestamp is None:
+        # print(f'No timestamp found for media: {media}')
+        continue
+    else:
+        # # Cần bật lại khi chạy thực tế
+        # process_media_lite(timestamp=timestamp, media_path=working_path/media)
+        processed_media.append(media)
+
+error_json = [x for x in all_json if x not in processed_json]
+error_media = [x for x in all_media if x not in processed_media] 
 
 print(f'Media count: {len(processed_media)}+{len(error_media)}={len(processed_media)+len(error_media)} vs {len(all_media)}')
 print(f'JSON count: {len(processed_json)}+{len(error_json)}={len(processed_json)+len(error_json)} vs {len(all_json)}')
