@@ -60,11 +60,12 @@ print(f'error media: {len(error_media)}')
 #     print(name)
 
 
-
+media_with_timestamp = []
 print('-----------------------------------')
 print("Processing error media files that have timestamp...")
 for media in error_media:
     timestamp = get_media_create_timestamp(working_path/media)
+    print(f'Processing media: {media}, timestamp: {timestamp}')
     if timestamp is None:
         # print(f'No timestamp found for media: {media}')
         continue
@@ -72,6 +73,7 @@ for media in error_media:
         # # Cần bật lại khi chạy thực tế
         # process_media_lite(timestamp=timestamp, media_path=working_path/media)
         processed_media.append(media)
+        media_with_timestamp.append(media)
 
 error_json = [x for x in all_json if x not in processed_json]
 error_media = [x for x in all_media if x not in processed_media] 
@@ -83,7 +85,7 @@ print(f'error json: {len(error_json)}')
 print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 
-lists_to_excel(output_path="check_errors_3.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json )
+lists_to_excel(output_path="check_errors_3.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
 
 # if __name__ == "__main__":
 #     lists_to_excel(
