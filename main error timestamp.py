@@ -32,7 +32,10 @@ for json in all_json:
         guess_title = f"{name}{suffix}{ext}"
         if guess_title in all_media:
             processed_json.append(json)
-            processed_media.append(guess_title)        
+            processed_media.append(guess_title)
+        elif unicodedata.normalize("NFC",guess_title) in all_media:
+            processed_json.append(json)
+            processed_media.append(unicodedata.normalize("NFC",guess_title))        
     elif suffix == "original":
         # trường hợp title trong file json có xuất hiện trong all_media
         title = extract_title_not(working_path/json)
@@ -90,7 +93,7 @@ print(f'error json: {len(error_json)}')
 print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 
-lists_to_excel(output_path="ok-file-name-change.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
+lists_to_excel(output_path="ok fix if v2.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
 
 # if __name__ == "__main__":
 #     lists_to_excel(
