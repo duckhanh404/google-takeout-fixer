@@ -3,11 +3,11 @@ from errorHandler import *
 from metadatafix import *
 from move import *
 from test import normalize_existing_path
-
+from datetime import datetime
 
 # test lỗi đường dẫn khi tìm timestamp trong file media
-
-raw_path = r'/Users/hannada/Downloads/Ảnh từ năm 2018'
+beginning_time = datetime.now()
+raw_path = r"E:\Takeout\Google Photos\Anh tu nam 2019"
 path = normalize_existing_path(raw_path)
 working_path = Path(path)
 all_json = get_all_json(working_path)
@@ -23,8 +23,9 @@ processed_json = []
 print('-----------------------------------')    
 print("Matching JSON files with media files...")
 
-for json in all_json:
+for index, json in enumerate(all_json):
     suffix = is_that_cloned(json)
+    print(f'Processing: {index}/{len(all_json)}')
     if suffix != "original":
         # trường hợp đặc biệt: file json là bản sao (có đuôi (số))
         title = extract_title_not(working_path/json)
@@ -58,7 +59,7 @@ print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 # print(error_json)
 # print(error_media)
-# lists_to_excel(output_path="check_errors_2.xlsx", error_json=error_json, error_media=error_media)
+lists_to_excel(output_path="check_errors_2.xlsx", error_json=error_json, error_media=error_media)
 
 
 # print('-----------------------------------')
@@ -92,8 +93,9 @@ print(f'processed json: {len(processed_json)}')
 print(f'error json: {len(error_json)}')
 print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
-
-lists_to_excel(output_path="mac test 2018.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
+end_time =  datetime.now()
+print(f'Total time taken: {end_time - beginning_time}')
+# lists_to_excel(output_path="mac test 2018.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
 
 # if __name__ == "__main__":
 #     lists_to_excel(
