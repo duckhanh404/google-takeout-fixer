@@ -2,13 +2,11 @@ from jsonWork import *
 from errorHandler import *
 from metadatafix import *
 from move import *
-from test import normalize_existing_path
 from datetime import datetime
 
 # test lỗi đường dẫn khi tìm timestamp trong file media
 beginning_time = datetime.now()
-raw_path = r"E:\Takeout\Google Photos\Anh tu nam 2019"
-path = normalize_existing_path(raw_path)
+path = r"E:\Takeout\Google Photos\Anh tu nam 2019"
 working_path = Path(path)
 all_json = get_all_json(working_path)
 all_media = get_all_media(working_path)
@@ -97,7 +95,7 @@ end_time =  datetime.now()
 print(f'Total time taken: {end_time - beginning_time}')
 
 
-lists_to_excel(output_path="main errir timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
+lists_to_excel(output_path="main error timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
 
 # if __name__ == "__main__":
 #     lists_to_excel(

@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 from openpyxl import Workbook
 import subprocess
-from test import normalize_existing_path
+
 
 def extract_title(json_path:Path|str)->str:
     """
@@ -286,10 +286,8 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
 
 
 if __name__ == "__main__":
-    test_path = r"C:\Users\DucKhanhPC\Desktop\test\Ảnh từ năm 2019 lỗi\57378655740__7A5E02D2-6E50-48C9-9A3C-47D273FC5A.JPG"
-
-    path = normalize_existing_path(test_path)
-    print(path, path.exists())     # phải ra True
+    path = r"C:\Users\DucKhanhPC\Desktop\test\Ảnh từ năm 2019 lỗi\57378655740__7A5E02D2-6E50-48C9-9A3C-47D273FC5A.JPG"
+    # print(path, path.exists())     # phải ra True
 
     a = get_media_create_timestamp(path)
     print(a)
