@@ -10,7 +10,7 @@ EXIF_FIELDS = [
     "CreateDate",
     "MediaCreateDate",
     "ModifyDate",
-    "FileModifyDate",
+    # "FileModifyDate",
     "DateCreated",
 ]
 
@@ -20,7 +20,7 @@ def extract_metadata_to_excel(input_dir, output_xlsx):
     output_xlsx = Path(output_xlsx)
 
     # Lấy & sort file để đảm bảo thứ tự khớp ExifTool
-    files = sorted([f for f in input_dir.iterdir() if f.is_file()])
+    files = sorted([f for f in input_dir.iterdir() if f.is_file() and f.suffix.lower() != ".json"])
     total_files = len(files)
 
     if total_files == 0:
