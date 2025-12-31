@@ -95,7 +95,9 @@ print(f'processed media: {len(processed_media)}')
 print(f'error media: {len(error_media)}')
 end_time =  datetime.now()
 print(f'Total time taken: {end_time - beginning_time}')
-# lists_to_excel(output_path="mac test 2018.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json,media_with_timestamp=media_with_timestamp)
+
+
+lists_to_excel(output_path="main errir timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
 
 # if __name__ == "__main__":
 #     lists_to_excel(

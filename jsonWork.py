@@ -234,7 +234,8 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
         "-CreateDate",
         "-MediaCreateDate",
         "-ModifyDate",
-        "-FileModifyDate",
+        # "-FileModifyDate", # thường không chính xác lắm
+        "-DateCreated",
         path_str
     ]
 
