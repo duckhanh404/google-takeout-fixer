@@ -66,11 +66,11 @@ def copy_files_from_excel(
 
 
 copied = copy_files_from_excel(
-    xlsx_path="data.xlsx",
-    sheet_name="Sheet1",
-    column_name="filename",
-    source_dir="/Users/you/media",
-    dest_dir="/Users/you/output"
+    xlsx_path="main 10122025.xlsx",
+    sheet_name="Data",
+    column_name="error_media",
+    source_dir="E:\Takeout\Google Photos\Anh tu nam 2019",
+    dest_dir="E:\loi"
 )
 
 print(f"Đã copy {len(copied)} file")
