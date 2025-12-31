@@ -50,5 +50,5 @@ def get_metadata(file_path: str | Path) -> dict:
         return {}
 if __name__ == "__main__":
     # Ví dụ sử dụng
-    metadata = get_metadata(r"/Users/hannada/Desktop/IMG_1842-đã-chỉnh-sửa.PNG")
+    metadata = get_metadata(r"/Users/hannada/Desktop/loi/Ảnh chụp Màn hình 2019-11-21 lúc 11.47.12 .png")
     print(json.dumps(metadata, indent=4, ensure_ascii=False))
