@@ -95,7 +95,8 @@ end_time =  datetime.now()
 print(f'Total time taken: {end_time - beginning_time}')
 
 
-lists_to_excel(output_path="main error timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
+# lists_to_excel(output_path="main error timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
+copy_files_from_lists(source_dir=working_path, dest_dir=Path(r"C:\Users\DucKhanhPC\Desktop\last error"), file_lists=[error_media,all_json])
 
 # if __name__ == "__main__":
 #     lists_to_excel(
