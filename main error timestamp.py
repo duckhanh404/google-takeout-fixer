@@ -81,15 +81,22 @@ for media in error_media:
         matching_json = find_matching_json(path, media, all_json)
         if matching_json:
             print(f"Media: {media} -> Matching JSON: {matching_json}")
-            success_count += 1
-            process_media.append(media)
+            # success_count += 1
+            processed_media.append(media)
             # success_media.append(matching_json)
             # matched_json.append(matching_json)
         # else:
             # print(f"Media: {media} -> No matching JSON found.")
 
+error_json = [x for x in all_json if x not in processed_json]
+error_media = [x for x in all_media if x not in processed_media]
 
-
+print(f'Media count: {len(processed_media)}+{len(error_media)}={len(processed_media)+len(error_media)} vs {len(all_media)}')
+print(f'JSON count: {len(processed_json)}+{len(error_json)}={len(processed_json)+len(error_json)} vs {len(all_json)}')
+print(f'processed json: {len(processed_json)}')
+print(f'error json: {len(error_json)}')
+print(f'processed media: {len(processed_media)}')
+print(f'error media: {len(error_media)}')
 end_time =  datetime.now()
 print(f'Total time taken: {end_time - beginning_time}')
 
