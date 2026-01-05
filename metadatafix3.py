@@ -1,11 +1,180 @@
+import subprocess
+from pathlib import Path
+from jsonWork import extract_time, convert_timestamp
 import json
 import unicodedata
-from pathlib import Path
 from datetime import datetime
 import re
 from openpyxl import Workbook
-import subprocess
 
+
+# =====================================================
+# EXIFTOOL SESSION (1 process duy nhất)
+# =====================================================
+class ExifToolSession:
+    """
+    Quản lý 1 phiên exiftool chạy nền (stay_open).
+    Dùng chung cho cả đọc và ghi metadata.
+    """
+
+    def __init__(self):
+        self.proc = subprocess.Popen(
+            ["exiftool", "-stay_open", "True", "-@", "-"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+    def execute(self, args: list[str]) -> str:
+        """
+        Gửi lệnh tới exiftool và trả về output (string).
+        """
+        assert self.proc.stdin and self.proc.stdout
+
+        for arg in args:
+            self.proc.stdin.write((arg + "\n").encode("utf-8"))
+
+        self.proc.stdin.write(b"-execute\n")
+        self.proc.stdin.flush()
+
+        output = b""
+        while True:
+            line = self.proc.stdout.readline()
+            if not line:
+                break
+            if line.strip() == b"{ready}":
+                break
+            output += line
+
+        return output.decode("utf-8", errors="replace")
+
+    def close(self):
+        """
+        Đóng exiftool an toàn.
+        """
+        if self.proc.stdin:
+            self.proc.stdin.write(b"-stay_open\nFalse\n")
+            self.proc.stdin.flush()
+        self.proc.wait()
+
+
+# =====================================================
+# GHI METADATA
+# =====================================================
+def write_metadata_with_exiftool(
+    et: ExifToolSession,
+    media_path: Path | str,
+    datetime_str: str
+) -> None:
+    """
+    Ghi metadata EXIF + FILETIME cho media.
+    """
+    media_path = Path(media_path)
+
+    et.execute([
+        f"-FileCreateDate={datetime_str}",
+        f"-FileModifyDate={datetime_str}",
+        "-overwrite_original",
+        str(media_path)
+    ])
+
+
+# =====================================================
+# ĐỌC TIMESTAMP TẠO MEDIA (TỐI ƯU)
+# =====================================================
+def get_media_create_timestamp(
+    et: ExifToolSession,
+    path: Path | str
+) -> int | None:
+    """
+    Lấy timestamp tạo media bằng exiftool (stay_open).
+    Trả về UNIX timestamp (int) hoặc None.
+    """
+    path_str = unicodedata.normalize("NFC", str(path))
+
+    output = et.execute([
+        "-j",
+        "-charset", "filename=utf8",
+        "-DateTimeOriginal",
+        "-CreateDate",
+        "-MediaCreateDate",
+        "-ModifyDate",
+        "-DateCreated",
+        path_str
+    ])
+
+    try:
+        data = json.loads(output)[0]
+    except Exception:
+        return None
+
+    for key in [
+        "DateTimeOriginal",
+        "CreateDate",
+        "MediaCreateDate",
+        "ModifyDate",
+        "FileModifyDate"
+    ]:
+        if key in data:
+            dt_str = data[key]
+            break
+    else:
+        return None
+
+    formats = [
+        "%Y:%m:%d %H:%M:%S",
+        "%Y:%m:%d %H:%M:%S%z",
+        "%Y:%m:%d %H:%M:%S.%f",
+        "%Y:%m:%d %H:%M:%S.%f%z"
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(dt_str, fmt)
+            return int(dt.timestamp())
+        except Exception:
+            continue
+
+    return None
+
+
+# =====================================================
+# XỬ LÝ MEDIA + JSON
+# =====================================================
+def process_media(
+    et: ExifToolSession,
+    json_path: Path | str,
+    media_path: Path | str
+) -> None:
+    """
+    Xử lý 1 cặp JSON + media (đọc time từ JSON).
+    """
+    json_path = Path(json_path)
+    media_path = Path(media_path)
+
+    dt = extract_time(json_path)
+    write_metadata_with_exiftool(et, media_path, dt)
+
+def process_media_lite(
+    et: ExifToolSession,
+    timestamp: str | int,
+    media_path: Path | str
+) -> None:
+    """
+    Xử lý media chỉ với timestamp có sẵn.
+    """
+    media_path = Path(media_path)
+    dt = convert_timestamp(timestamp)
+    write_metadata_with_exiftool(et, media_path, dt)
+
+
+
+
+
+
+# =====================================================
+# JSON extraction functions
+# =====================================================
 
 def extract_title(json_path:Path|str)->str:
     """
@@ -164,76 +333,3 @@ def check_normalization(s: str):
     else:
         return "Other"
     
-
-def get_media_create_timestamp(path: Path | str) -> int | None:
-    """
-    Lấy timestamp tạo media từ metadata (ảnh/video) bằng ExifTool.
-    Hỗ trợ Unicode trên Windows, nhiều định dạng thời gian, không crash nếu output không chuẩn UTF-8.
-    """
-    path_str = unicodedata.normalize("NFC", str(path))  # Fix Unicode path Windows
-
-    cmd = [
-        "exiftool",
-        "-j",
-        "-charset", "filename=utf8",
-        "-DateTimeOriginal",
-        "-CreateDate",
-        "-MediaCreateDate",
-        "-ModifyDate",
-        "-DateCreated",
-        path_str
-    ]
-
-    try:
-        # Chạy subprocess, đọc raw bytes trước
-        result = subprocess.run(
-            cmd,
-            capture_output=True
-        )
-
-        # Decode an toàn, nếu UTF-8 fail thì fallback CP1252
-        try:
-            output = result.stdout.decode("utf-8")
-        except UnicodeDecodeError:
-            output = result.stdout.decode("cp1252", errors="replace")
-
-        data = json.loads(output)[0]
-
-    except subprocess.CalledProcessError:
-        return None
-    except Exception:
-        return None
-
-    # Ưu tiên các trường thời gian
-    for key in ["DateTimeOriginal", "CreateDate", "MediaCreateDate", "ModifyDate", "FileModifyDate"]:
-        if key in data:
-            # print(f'Tìm thấy {key}: {data[key]}')
-            dt_str = data[key]
-            break
-    else:
-        return None
-
-    # Các format datetime phổ biến
-    formats = [
-        "%Y:%m:%d %H:%M:%S",
-        "%Y:%m:%d %H:%M:%S%z",
-        "%Y:%m:%d %H:%M:%S.%f",
-        "%Y:%m:%d %H:%M:%S.%f%z"
-    ]
-
-    for fmt in formats:
-        try:
-            dt = datetime.strptime(dt_str, fmt)
-            return int(dt.timestamp())
-        except Exception:
-            continue
-
-    return None
-
-
-if __name__ == "__main__":
-    path = r"C:\Users\DucKhanhPC\Desktop\test\Ảnh từ năm 2019 lỗi\57378655740__7A5E02D2-6E50-48C9-9A3C-47D273FC5A.JPG"
-    # print(path, path.exists())     # phải ra True
-
-    a = get_media_create_timestamp(path)
-    print(a)

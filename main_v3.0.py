@@ -1,13 +1,11 @@
 from jsonWork import *
-from errorHandler import *
 from metadatafix import *
-from move import *
 from datetime import datetime
 from decreaseName import find_matching_json
 
 # test lỗi đường dẫn khi tìm timestamp trong file media
 beginning_time = datetime.now()
-path = r"E:\Takeout\Google Photos\Anh tu nam 2019"
+path = r'/Users/hannada/Downloads/2018'
 working_path = Path(path)
 all_json = get_all_json(working_path)
 all_media = get_all_media(working_path)
@@ -101,5 +99,3 @@ end_time =  datetime.now()
 print(f'Total time taken: {end_time - beginning_time}')
 
 
-lists_to_excel(output_path="main error timestamp.xlsx", all_media=all_media, all_json=all_json, processed_media=processed_media, processed_json=processed_json, error_media=error_media, error_json=error_json)
-# copy_files_from_lists(source_dir=working_path, dest_dir=Path(r"C:\Users\DucKhanhPC\Desktop\last error"), file_lists=[error_media,all_json])

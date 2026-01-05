@@ -4,7 +4,7 @@ from move import *
 import sys
 import time
 from pathlib import Path
-from errorHandler import error_handler_1
+from draft.errorHandler import error_handler_1
 
 start_time = time.time()
 

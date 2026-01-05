@@ -45,9 +45,7 @@ def process_media(json_path: Path|str, media_path: Path|str)->None:
     """
     json_path = Path(json_path)
     media_path = Path(media_path)
-
     dt = extract_time(json_path)
-    # print(f"-> Setting {media_path.name} to {dt}")
     write_metadata_with_exiftool(media_path, dt)
 
 def process_media_lite(timestamp:str|int, media_path: Path|str)->None:

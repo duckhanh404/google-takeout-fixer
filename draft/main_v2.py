@@ -1,5 +1,5 @@
 from jsonWork import *
-from errorHandler import *
+from draft.errorHandler import *
 from metadatafix import *
 from move import *
 
