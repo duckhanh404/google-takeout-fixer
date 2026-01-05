@@ -2,13 +2,14 @@
 # sửa exiftool -> đọc nhanh
 # 
 
-# from jsonWork import get_all_media, get_all_json, is_that_cloned, extract_title_not, get_media_create_timestamp
-from metadatafix3 import *
+from jsonWork2 import get_all_media, get_all_json, is_that_cloned, extract_title_not, get_media_create_timestamp
+from metadatafix2 import *
 from datetime import datetime
 from decreaseName import find_matching_json
 from pathlib import Path
+from exiftool_singleton import ExifToolSingleton
 
-et = ExifToolSession()
+
 # test lỗi đường dẫn khi tìm timestamp trong file media
 beginning_time = datetime.now()
 last_time = beginning_time
@@ -41,7 +42,7 @@ for title in title_json_dict:
             processed_media.add(title)
             json_path = Path(path,json)
             media_path = Path(path , title)
-            process_media(et=et,json_path=json_path, media_path=media_path)
+            process_media(json_path=json_path, media_path=media_path)
         else:
             # print(f'Processing: {index}/{len(all_json)} - Not Found')
             continue
@@ -69,6 +70,7 @@ for media in error_media:
         # print(f'Processing Error: {index}/{len(error_media)} - {dt}')
         write_metadata_with_exiftool(media_path, dt)
         processed_media.add(media)
+ExifToolSingleton().close()
 
 error_json = all_json - processed_json
 error_media = all_media - processed_media
@@ -98,4 +100,5 @@ end_time =  datetime.now()
 print(f'Time taken: {end_time - last_time}')
 print('-----------------------------------')
 print(f'Total time taken: {end_time - beginning_time}')
+
 

@@ -1,111 +1,120 @@
 import subprocess
 from pathlib import Path
 from jsonWork import extract_time, convert_timestamp
-import json
 import unicodedata
 from datetime import datetime
-import re
-from openpyxl import Workbook
-
+import json
 
 # =====================================================
-# EXIFTOOL SESSION (1 process duy nhất)
+# ExifTool batch singleton
 # =====================================================
-class ExifToolSession:
-    """
-    Quản lý 1 phiên exiftool chạy nền (stay_open).
-    Dùng chung cho cả đọc và ghi metadata.
-    """
-
+class ExifToolBatch:
     def __init__(self):
-        self.proc = subprocess.Popen(
+        self.process = subprocess.Popen(
             ["exiftool", "-stay_open", "True", "-@", "-"],
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stdout=subprocess.PIPE,   # ⬅ PHẢI CÓ
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1
+)
+
+    def write_datetime(self, media_path: Path | str, datetime_str: str):
+        media_path = Path(media_path)
+
+        self.process.stdin.write(
+            f"-FileCreateDate={datetime_str}\n"
+            f"-FileModifyDate={datetime_str}\n"
+            f"{media_path}\n"
+            "-execute\n"
         )
 
-    def execute(self, args: list[str]) -> str:
-        """
-        Gửi lệnh tới exiftool và trả về output (string).
-        """
-        assert self.proc.stdin and self.proc.stdout
+    def read_datetime(self, media_path: Path | str) -> dict | None:
+        media_path = Path(media_path)
 
-        for arg in args:
-            self.proc.stdin.write((arg + "\n").encode("utf-8"))
+        cmd = (
+            "-j\n"
+            "-charset\n"
+            "filename=utf8\n"
+            "-DateTimeOriginal\n"
+            "-CreateDate\n"
+            "-MediaCreateDate\n"
+            "-ModifyDate\n"
+            "-DateCreated\n"
+            f"{media_path}\n"
+            "-execute\n"
+        )
 
-        self.proc.stdin.write(b"-execute\n")
-        self.proc.stdin.flush()
+        self.process.stdin.write(cmd)
+        self.process.stdin.flush()
 
-        output = b""
+        # đọc output cho tới {ready}
+        output = ""
         while True:
-            line = self.proc.stdout.readline()
+            line = self.process.stdout.readline()
             if not line:
                 break
-            if line.strip() == b"{ready}":
+            if line.strip() == "{ready}":
                 break
             output += line
 
-        return output.decode("utf-8", errors="replace")
+        try:
+            return json.loads(output)[0]
+        except Exception:
+            return None
 
     def close(self):
-        """
-        Đóng exiftool an toàn.
-        """
-        if self.proc.stdin:
-            self.proc.stdin.write(b"-stay_open\nFalse\n")
-            self.proc.stdin.flush()
-        self.proc.wait()
+        if self.process.stdin:
+            self.process.stdin.close()
+        self.process.wait()
 
 
 # =====================================================
-# GHI METADATA
+# Singleton instance (QUAN TRỌNG)
 # =====================================================
-def write_metadata_with_exiftool(
-    et: ExifToolSession,
-    media_path: Path | str,
-    datetime_str: str
-) -> None:
-    """
-    Ghi metadata EXIF + FILETIME cho media.
-    """
-    media_path = Path(media_path)
-
-    et.execute([
-        f"-FileCreateDate={datetime_str}",
-        f"-FileModifyDate={datetime_str}",
-        "-overwrite_original",
-        str(media_path)
-    ])
+_exiftool = None
 
 
+def get_exiftool() -> ExifToolBatch:
+    global _exiftool
+    if _exiftool is None:
+        _exiftool = ExifToolBatch()
+    return _exiftool
+
+
+def close_exiftool():
+    global _exiftool
+    if _exiftool:
+        _exiftool.close()
+        _exiftool = None
+
+
 # =====================================================
-# ĐỌC TIMESTAMP TẠO MEDIA (TỐI ƯU)
+# API dùng cho main
 # =====================================================
-def get_media_create_timestamp(
-    et: ExifToolSession,
-    path: Path | str
-) -> int | None:
-    """
-    Lấy timestamp tạo media bằng exiftool (stay_open).
-    Trả về UNIX timestamp (int) hoặc None.
-    """
+def write_metadata_with_exiftool(media_path: Path | str, datetime_str: str):
+    exif = get_exiftool()
+    exif.write_datetime(media_path, datetime_str)
+
+
+def process_media(json_path: Path | str, media_path: Path | str) -> None:
+    json_path = Path(json_path)
+    dt = extract_time(json_path)
+    write_metadata_with_exiftool(media_path, dt)
+
+
+def process_media_lite(timestamp: str | int, media_path: Path | str) -> None:
+    dt = convert_timestamp(timestamp)
+    write_metadata_with_exiftool(media_path, dt)
+
+
+def get_media_create_timestamp(path: Path | str) -> int | None:
     path_str = unicodedata.normalize("NFC", str(path))
 
-    output = et.execute([
-        "-j",
-        "-charset", "filename=utf8",
-        "-DateTimeOriginal",
-        "-CreateDate",
-        "-MediaCreateDate",
-        "-ModifyDate",
-        "-DateCreated",
-        path_str
-    ])
+    exif = get_exiftool()
+    data = exif.read_datetime(path_str)
 
-    try:
-        data = json.loads(output)[0]
-    except Exception:
+    if not data:
         return None
 
     for key in [
@@ -125,211 +134,13 @@ def get_media_create_timestamp(
         "%Y:%m:%d %H:%M:%S",
         "%Y:%m:%d %H:%M:%S%z",
         "%Y:%m:%d %H:%M:%S.%f",
-        "%Y:%m:%d %H:%M:%S.%f%z"
+        "%Y:%m:%d %H:%M:%S.%f%z",
     ]
 
     for fmt in formats:
         try:
-            dt = datetime.strptime(dt_str, fmt)
-            return int(dt.timestamp())
+            return int(datetime.strptime(dt_str, fmt).timestamp())
         except Exception:
             continue
 
     return None
-
-
-# =====================================================
-# XỬ LÝ MEDIA + JSON
-# =====================================================
-def process_media(
-    et: ExifToolSession,
-    json_path: Path | str,
-    media_path: Path | str
-) -> None:
-    """
-    Xử lý 1 cặp JSON + media (đọc time từ JSON).
-    """
-    json_path = Path(json_path)
-    media_path = Path(media_path)
-
-    dt = extract_time(json_path)
-    write_metadata_with_exiftool(et, media_path, dt)
-
-def process_media_lite(
-    et: ExifToolSession,
-    timestamp: str | int,
-    media_path: Path | str
-) -> None:
-    """
-    Xử lý media chỉ với timestamp có sẵn.
-    """
-    media_path = Path(media_path)
-    dt = convert_timestamp(timestamp)
-    write_metadata_with_exiftool(et, media_path, dt)
-
-
-
-
-
-
-# =====================================================
-# JSON extraction functions
-# =====================================================
-
-def extract_title(json_path:Path|str)->str:
-    """
-    trích xuất title từ file json
-    - đầu vào là Path hoặc string đường dẫn đến file json
-    - trả về là string đã chuẩn hóa NFC
-    """
-    json_path = Path(json_path)  # đảm bảo luôn là Path
-    with json_path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    title = data.get("title", None)
-    # trả về string đã chuẩn hóa NFC
-    return unicodedata.normalize("NFC", title)
-
-def extract_title_not(json_path:Path|str)->str:
-    """
-    trích xuất title từ file json
-    - đầu vào là Path hoặc string đường dẫn đến file json
-    - trả về là string chưa chuẩn hóa NFC
-    """
-    json_path = Path(json_path)  # đảm bảo luôn là Path
-    with json_path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    title = data.get("title", None)
-    # trả về string đã chuẩn hóa NFC
-    return title
-
-def extract_time(json_path:Path|str)->str:
-    """
-    Trích xuất thời gian từ file json
-    - đầu vào là Path hoặc string đường dẫn đến file json
-    - trả về là timestamp dưới dạng string theo định dạng EXIF: YYYY:MM:DD HH:MM:SS
-    Ở đây ưu tiên "photoTakenTime" hơn "creationTime".
-    """
-    json_path = Path(json_path)
-    with json_path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # ưu tiên đúng thứ tự
-    if "photoTakenTime" in data and "timestamp" in data["photoTakenTime"]:
-        ts = int(data["photoTakenTime"]["timestamp"])
-    elif "creationTime" in data and "timestamp" in data["creationTime"]:
-        ts = int(data["creationTime"]["timestamp"])
-    else:
-        raise ValueError(f"Không có timestamp hợp lệ trong JSON: {json_path}")
-    # EXIF format bắt buộc: YYYY:MM:DD HH:MM:SS
-    dt = datetime.fromtimestamp(ts)
-    return dt.strftime("%Y:%m:%d %H:%M:%S")
-
-def convert_timestamp(timestamp:int|str)->str:
-    """
-    Chuyển timestamp (int hoặc str) thành chuỗi datetime theo định dạng EXIF: YYYY:MM:DD HH:MM:SS
-    """
-    timestamp = int(timestamp)
-    dt = datetime.fromtimestamp(timestamp)
-    return dt.strftime("%Y:%m:%d %H:%M:%S")
-    
-def get_all_json(folder_path:Path|str)->set[str]:
-    """
-    Lấy tất cả file json trong thư mục
-    - đầu vào là Path hoặc string đường dẫn đến thư mục
-    - trả về là set tên file json chuẩn hóa
-    """
-    folder_path = Path(folder_path)
-    if not folder_path.is_dir():
-        raise ValueError("Đường dẫn không phải thư mục hợp lệ!")
-
-    return {
-        unicodedata.normalize("NFC", filename.name)
-        for filename in folder_path.iterdir()
-        if filename.is_file() and filename.suffix.lower() == ".json"
-    }
-    # return {
-    #     filename.name
-    #     for filename in folder_path.iterdir()
-    #     if filename.is_file() and filename.suffix.lower() == ".json"
-    # }
-
-def get_all_media(folder_path:Path|str)->set[str]:
-    """
-    lấy tất cả file media (không phải json) trong thư mục
-    - đầu vào là Path hoặc string đường dẫn đến thư mục
-    - trả về là set tên file media chuẩn hóa
-    """
-    folder_path = Path(folder_path)
-    if not folder_path.is_dir():
-        raise ValueError("Đường dẫn không hợp lệ!")
-
-    return {
-        unicodedata.normalize("NFC", file.name)
-        for file in folder_path.iterdir()
-        if file.is_file() and file.suffix.lower() != ".json"
-    }
-    # return {
-    #     file.name
-    #     for file in folder_path.iterdir()
-    #     if file.is_file() and file.suffix.lower() != ".json"
-    # }
-
-def is_that_cloned(file_name: str) -> str:
-    """
-    Kiểm tra tên file có đuôi dạng (số) ngay trước extension hay không.
-    Hỗ trợ cả trường hợp có khoảng trắng: "image (1).jpg"
-    trả về True nếu đúng là có đuôi (số), ngược lại False.
-    Trả về chuỗi "(n)" nếu tên file có dạng (n) ngay trước extension.
-    Nếu không có, trả về 0.
-    """
-    name = Path(file_name).stem
-
-    # Tìm dạng: optional-space + (digits) + end
-    match = re.search(r"\s*\(\d+\)$", name)
-    if match:
-        return match.group().strip()  # return "(2)" (loại bỏ space nếu có)
-    return "original"
-
-def lists_to_excel(output_path="output.xlsx", **kwargs):
-    """
-    Ghi nhiều list vào file Excel.
-    Tên mỗi cột chính là tên biến list được truyền vào.
-    
-    Ví dụ gọi hàm:
-    lists_to_excel(output="out.xlsx", list1=a, list2=b, my_data=c)
-    """
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Data"
-
-    # Lấy danh sách tên cột (keys) và dữ liệu (values)
-    headers = list(kwargs.keys())
-    columns = list(kwargs.values())
-
-    # Ghi tiêu đề cột
-    for col_idx, header in enumerate(headers, start=1):
-        ws.cell(row=1, column=col_idx, value=header)
-
-    # Tìm số dòng tối đa (list dài nhất)
-    max_len = max(len(col) for col in columns)
-
-    # Ghi dữ liệu
-    for row_idx in range(max_len):
-        for col_idx, col_data in enumerate(columns, start=1):
-            if row_idx < len(col_data):
-                ws.cell(row=row_idx + 2, column=col_idx, value=col_data[row_idx])
-
-    wb.save(output_path)
-    print(f"✔ Đã tạo file Excel: {output_path}")
-
-def check_normalization(s: str):
-    """
-    Trả về dạng unicode của string: 'NFC', 'NFD', hoặc 'Other'
-    """
-    if s == unicodedata.normalize("NFC", s):
-        return "NFC"
-    elif s == unicodedata.normalize("NFD", s):
-        return "NFD"
-    else:
-        return "Other"
-    
