@@ -3,12 +3,12 @@
 # tối ưu xuống 0,43s cho folder 2018 (996 files)
 # tối ưu xuống 15s cho folder 2019 ~20000 files - thời gian trước là ~4 phút
 
-from jsonWork2 import get_all_media, get_all_json, is_that_cloned, extract_title_not, get_media_create_timestamp
+from jsonWork2 import get_all_media, get_all_json, is_that_cloned, extract_title_not
 from metadatafix2 import *
 from datetime import datetime
 from decreaseName import find_matching_json
 from pathlib import Path
-from exiftool_singleton import ExifToolSingleton
+from metadatafix2 import ExifToolBatch
 
 
 # test lỗi đường dẫn khi tìm timestamp trong file media
@@ -71,7 +71,7 @@ for media in error_media:
         # print(f'Processing Error: {index}/{len(error_media)} - {dt}')
         write_metadata_with_exiftool(media_path, dt)
         processed_media.add(media)
-ExifToolSingleton().close()
+ExifToolBatch().close()
 
 error_json = all_json - processed_json
 error_media = all_media - processed_media

@@ -14,7 +14,7 @@ from exiftool_singleton import ExifToolSingleton
 # test lỗi đường dẫn khi tìm timestamp trong file media
 beginning_time = datetime.now()
 last_time = beginning_time
-path = r'/Users/hannada/Downloads/2019'
+path = r'/Users/hannada/Downloads/2018'
 working_path = Path(path)
 all_json = get_all_json(working_path)
 all_media = get_all_media(working_path)
