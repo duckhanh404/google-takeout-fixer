@@ -208,18 +208,12 @@ MIT License
 Issues and Pull Requests are welcome ✨
 If you run this tool on very large datasets, feel free to share benchmarks!
 
-
+===============================
 ========= Tiếng Việt ==========
+===============================
 
 ***Lưu ý, Phiên bản 4.0 hiện tại chỉ có cho người biết sử dụng python và xử lý 1 folder tại 1 thời điểm. Trong phiên bản 4.1 tôi sẽ làm giao diện GUI cũng như bổ sung thêm tính năng xử lý nhiều folder.***
-Rất ổn 👍
-Mình sẽ viết **README.md cho phiên bản 4.0** theo phong cách **thực tế – kỹ thuật – dễ bảo trì**, đúng với dự án của bạn (Google Takeout / media timestamp fixer).
 
-Bạn có thể **copy dùng ngay**.
-
----
-
-```markdown
 # Google Takeout Media Timestamp Fixer – v4.0
 
 Công cụ Python giúp **khôi phục / đồng bộ lại timestamp cho file media (ảnh, video)** được export từ **Google Takeout**, dựa trên metadata trong file JSON đi kèm.
@@ -247,39 +241,37 @@ Phiên bản **v4.0** được thiết kế lại hoàn toàn theo **kiến trú
 
 ### Tổng quan pipeline
 
-```
 
-1. Build JSON index (1 lần)
-2. Phase 1: Match chính xác media ↔ JSON (O(1))
-3. Phase 2: Đọc timestamp trực tiếp từ media EXIF
-4. Phase 3: Fallback prefix match JSON
-5. Ghi metadata bằng ExifTool stay_open
 
-```
+Build JSON index (1 lần)
+
+- Phase 1: Match chính xác media ↔ JSON (O(1))
+- Phase 2: Đọc timestamp trực tiếp từ media EXIF
+- Phase 3: Fallback prefix match JSON
+
+Ghi metadata bằng ExifTool stay_open
+
 
 ### Điểm khác biệt so với v3.x
 
-| Vấn đề | v3.x | v4.0 |
-|------|-----|------|
-| Đọc JSON | Nhiều lần | **1 lần duy nhất** |
-| Prefix match | O(N³) | **O(N·L)** |
-| ExifTool | gọi lặp | **stay_open** |
-| Scale lớn | ❌ | ✅ |
-| Độ ổn định | Trung bình | **Cao** |
+| Vấn đề       | v3.x       | v4.0               |
+| ------------ | ---------- | ------------------ |
+| Đọc JSON     | Nhiều lần  | **1 lần duy nhất** |
+| Prefix match | O(N³)      | **O(N·L)**         |
+| ExifTool     | gọi lặp    | **stay_open**      |
+| Scale lớn    | ❌          | ✅                  |
+| Độ ổn định   | Trung bình | **Cao**            |
 
 ---
 
 ## 📁 Cấu trúc project
-
 ```
-
 .
-├── main_v4.0.py        # Entry point
-├── metadata.py         # ExifTool + helper functions
-├── json_index.py       # JSON index & matching logic
+├── main_v4.0.py # Entry point
+├── metadata.py # ExifTool + helper functions
+├── json_index.py # JSON index & matching logic
 └── README.md
-
-````
+```
 
 ---
 
@@ -293,32 +285,26 @@ Phiên bản **v4.0** được thiết kế lại hoàn toàn theo **kiến trú
 **macOS (Homebrew):**
 ```bash
 brew install exiftool
-````
+```
 
 **Ubuntu / Debian:**
-
-```bash
+```Ubuntu / Debian:
 sudo apt install libimage-exiftool-perl
 ```
 
 **Windows:**
 
-* Tải từ: [https://exiftool.org](https://exiftool.org)
-* Thêm vào PATH
-
----
+- Tải từ: https://exiftool.org
+- Thêm vào PATH
 
 ## ▶️ Cách sử dụng
-
-### 1️⃣ Chuẩn bị thư mục
+## 1️⃣ Chuẩn bị thư mục
 
 Thư mục cần xử lý phải chứa:
-
-* File media (`.jpg`, `.png`, `.heic`, `.mp4`, ...)
-* File JSON tương ứng do Google Takeout xuất
+- File media (.jpg, .png, .heic, .mp4, ...)
+- File JSON tương ứng do Google Takeout xuất
 
 Ví dụ:
-
 ```
 /Photos/
 ├── IMG_0001.jpg
@@ -327,56 +313,38 @@ Ví dụ:
 ├── IMG_0002.jpg.json
 ```
 
----
-
 ### 2️⃣ Cấu hình đường dẫn
 
-Mở `main_v4.0.py` và sửa:
-
-```python
+Mở main_v4.0.py và sửa:
+```
 ROOT = Path("/path/to/google-takeout-folder")
 ```
 
----
-
 ### 3️⃣ Chạy chương trình
-
-```bash
+```
 python main_v4.0.py
 ```
 
----
-
 ## 🔍 Chi tiết các phase
-
 ### Phase 1 – Exact match
-
-* Match media ↔ JSON theo `title`
-* Nhanh nhất, chính xác tuyệt đối
-
+- Match media ↔ JSON theo title
+- Nhanh nhất, chính xác tuyệt đối
 ### Phase 2 – EXIF fallback
-
-* Đọc timestamp trực tiếp từ metadata media
-* Dùng khi JSON bị thiếu hoặc không khớp
+- Đọc timestamp trực tiếp từ metadata media
+- Dùng khi JSON bị thiếu hoặc không khớp
 
 ### Phase 3 – Prefix fallback
-
-* Giảm dần tên file để match JSON
-* Xử lý trường hợp:
-
-  * File bị clone `(1)`, `(2)`
-  * Tên bị cắt
-  * Khác encoding
-
----
+- Giảm dần tên file để match JSON
+- Xử lý trường hợp:
+	- File bị clone (1), (2)
+	- Tên bị cắt
+	- Khác encoding
 
 ## ⚠️ Lưu ý quan trọng
 
-* **File gốc sẽ bị ghi đè metadata**
-* Nên **backup trước khi chạy**
-* ExifTool chạy ở chế độ `-overwrite_original`
-
----
+- File gốc sẽ bị ghi đè metadata
+- Nên backup trước khi chạy
+- ExifTool chạy ở chế độ -overwrite_original
 
 ## ⏱️ Hiệu năng thực tế (tham khảo)
 
@@ -384,47 +352,28 @@ python main_v4.0.py
 | ------------- | ----------- |
 | ~3.000 media  | ~30–40 giây |
 | ~10.000 media | ~1–2 phút   |
-
 (macOS M1/M2, SSD)
-
----
 
 ## ❓ Vì sao không dùng multiprocessing?
 
-* Bài toán này **IO-bound**
-* ExifTool là subprocess → spawn rất tốn thời gian
-* Single-thread + `stay_open` cho hiệu năng tốt nhất
-
-👉 Multiprocessing **không mang lại lợi ích đáng kể** cho trường hợp này.
-
----
+- Bài toán này IO-bound
+- ExifTool là subprocess → spawn rất tốn thời gian
+- Single-thread + stay_open cho hiệu năng tốt nhất
+👉 Multiprocessing không mang lại lợi ích đáng kể cho trường hợp này.
 
 ## 🛠️ Hướng phát triển tiếp theo
 
-* [ ] Resume mode (chạy tiếp khi bị gián đoạn)
-* [ ] Progress bar
-* [ ] CLI (`python fixdate.py <folder>`)
-* [ ] Trie-based prefix index
-* [ ] Multi ExifTool pipeline
-
----
-
-## 📜 License
-
-MIT License
-
----
+ - [ ] Resume mode (chạy tiếp khi bị gián đoạn)
+ - [ ] Progress bar
+ - [ ] CLI (python fixdate.py <folder>)
+- [ ] Trie-based prefix index
+- [ ] Multi ExifTool pipeline
 
 ## 🙌 Credits
-
-* ExifTool – Phil Harvey
-* Google Takeout
-
----
+- ExifTool – Phil Harvey
+- Google Takeout
+- ChatGPT
 
 ## 💡 Góp ý & đóng góp
-
-Pull Request và Issue luôn được hoan nghênh ✨
-Nếu bạn dùng tool này cho dataset lớn, đừng ngại chia sẻ benchmark!
-
-
+- Pull Request và Issue luôn được hoan nghênh ✨
+- Nếu bạn dùng tool này cho dataset lớn, đừng ngại chia sẻ benchmark!
