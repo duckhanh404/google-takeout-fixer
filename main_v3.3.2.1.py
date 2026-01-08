@@ -3,12 +3,12 @@
 # tối ưu xuống 0,43s cho folder 2018 (996 files)
 # tối ưu xuống 15s cho folder 2019 ~20000 files - thời gian trước là ~4 phút
 
-from jsonWork2 import get_all_media, get_all_json, is_that_cloned, extract_title_not#, get_media_create_timestamp
+from jsonWork2 import get_all_media, get_all_json, is_that_cloned, extract_title_not, get_media_create_timestamp
 from metadatafix2 import *
 from datetime import datetime
 from decreaseName import find_matching_json
 from pathlib import Path
-import time
+
 
 
 # test lỗi đường dẫn khi tìm timestamp trong file media
@@ -25,6 +25,7 @@ all_media = get_all_media(working_path)
 title_json_dict = {
     json: extract_title_not(f'{path}/{json}') for json in all_json
 }
+
 error_json = set()
 error_media = set()
 processed_media = set()
@@ -32,8 +33,7 @@ processed_json = set()
 
 print('-----------------------------------')    
 print(f"1. Xử lý các trường hợp có file json - {len(title_json_dict)} files")
-# for json in all_json:
-for json,title in title_json_dict.items():
+for json, title in title_json_dict.items():
     # json = title_json_dict[title]
     suffix = is_that_cloned(json)
     if suffix == "original":
@@ -45,7 +45,7 @@ for json,title in title_json_dict.items():
             processed_media.add(title)
             json_path = Path(path,json)
             media_path = Path(path , title)
-            # process_media(json_path=json_path, media_path=media_path)
+            process_media(json_path=json_path, media_path=media_path)
         else:
             # print(f'Processing: {index}/{len(all_json)} - Not Found')
             continue
@@ -54,7 +54,6 @@ for json,title in title_json_dict.items():
 # tạo danh sách lỗi (file có trong all nhưng không có trong processed)
 error_json = all_json - processed_json
 error_media = all_media - processed_media
-
 print(f'all_json: {len(all_json)}, processed_json: {len(processed_json)}, error_json: {len(error_json)}')
 print(f'all_media: {len(all_media)}, processed_media: {len(processed_media)}, error_media: {len(error_media)}')
 
@@ -80,25 +79,26 @@ error_media = all_media - processed_media
 end_time =  datetime.now()
 print(f'Time taken: {end_time - last_time}')
 last_time = end_time
-
 print('-----------------------------------')
 print(f'3. Xử lý các trường hợp lỗi còn lại bằng cách giảm dần tên media để tìm json khớp - {len(error_media)} files')
-# for media in error_media:
-#         matching_json = find_matching_json(path, media, all_json)
-#         if matching_json:
-#             json_path = Path(path , matching_json)
-#             media_path = Path(path , media)
-#             process_media(json_path, media_path)
-#             processed_media.add(media)
-#             processed_json.add(matching_json)
-#         # print(f'Tìm json cho media: {index}/{len(error_media)} - {matching_json}')
+for media in error_media:
+        matching_json = find_matching_json(path, media, all_json)
+        if matching_json:
+            json_path = Path(path , matching_json)
+            media_path = Path(path , media)
+            process_media(json_path, media_path)
+            processed_media.add(media)
+            processed_json.add(matching_json)
+        # print(f'Tìm json cho media: {index}/{len(error_media)} - {matching_json}')
 
 
-# # ExifToolBatch().close()
-# error_json = all_json - processed_json
-# error_media = all_media - processed_media
+# ExifToolSingleton().close()
+error_json = all_json - processed_json
+error_media = all_media - processed_media
 
-# end_time =  datetime.now()
-# print(f'Time taken: {end_time - last_time}')
-# print('-----------------------------------')
-# print(f'Total time taken: {end_time - beginning_time}')
+end_time =  datetime.now()
+print(f'Time taken: {end_time - last_time}')
+print('-----------------------------------')
+print(f'Total time taken: {end_time - beginning_time}')
+
+

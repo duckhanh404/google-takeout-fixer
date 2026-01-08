@@ -211,5 +211,6 @@ def get_media_create_timestamp(path: Path | str) -> int | None:
 
     return None
 
-
-
+if __name__ == "__main__":
+    a=get_media_create_timestamp("/Users/hannada/Downloads/2019/IMG_2096(1).HEIC")
+    print(a)
