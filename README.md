@@ -1,6 +1,8 @@
 # Google Takeout Media Timestamp Fixer – v4.0
 (Tiếng Việt ở phía dưới)
 
+**Please note that the current version 4.0 is only for Python users and can only handle one folder at a time. In version 4.1, I will create a GUI interface and add functionality for handling multiple folders.**
+
 A Python tool to **restore and synchronize timestamps for media files (photos & videos)** exported from **Google Takeout**, using metadata stored in the accompanying JSON files.
 
 Version **v4.0** is fully redesigned using an **index-based architecture**, optimized for:
@@ -198,7 +200,7 @@ MIT License
 
 * ExifTool – Phil Harvey
 * Google Takeout
-
+* ChatGPT
 ---
 
 ## 💡 Contributions
@@ -210,15 +212,10 @@ If you run this tool on very large datasets, feel free to share benchmarks!
 ========= Tiếng Việt ==========
 ===============================
 
-Rất ổn 👍
-Mình sẽ viết **README.md cho phiên bản 4.0** theo phong cách **thực tế – kỹ thuật – dễ bảo trì**, đúng với dự án của bạn (Google Takeout / media timestamp fixer).
-
-Bạn có thể **copy dùng ngay**.
-
----
-
 ```markdown
 # Google Takeout Media Timestamp Fixer – v4.0
+
+***Lưu ý, Phiên bản 4.0 hiện tại chỉ có cho người biết sử dụng python và xử lý 1 folder tại 1 thời điểm. Trong phiên bản 4.1 tôi sẽ làm giao diện GUI cũng như bổ sung thêm tính năng xử lý nhiều folder.***
 
 Công cụ Python giúp **khôi phục / đồng bộ lại timestamp cho file media (ảnh, video)** được export từ **Google Takeout**, dựa trên metadata trong file JSON đi kèm.
 
@@ -417,6 +414,7 @@ MIT License
 
 * ExifTool – Phil Harvey
 * Google Takeout
+* ChatGPT
 
 ---
 
