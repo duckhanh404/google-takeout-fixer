@@ -208,14 +208,19 @@ MIT License
 Issues and Pull Requests are welcome ✨
 If you run this tool on very large datasets, feel free to share benchmarks!
 
-===============================
+
 ========= Tiếng Việt ==========
-===============================
+
+***Lưu ý, Phiên bản 4.0 hiện tại chỉ có cho người biết sử dụng python và xử lý 1 folder tại 1 thời điểm. Trong phiên bản 4.1 tôi sẽ làm giao diện GUI cũng như bổ sung thêm tính năng xử lý nhiều folder.***
+Rất ổn 👍
+Mình sẽ viết **README.md cho phiên bản 4.0** theo phong cách **thực tế – kỹ thuật – dễ bảo trì**, đúng với dự án của bạn (Google Takeout / media timestamp fixer).
+
+Bạn có thể **copy dùng ngay**.
+
+---
 
 ```markdown
 # Google Takeout Media Timestamp Fixer – v4.0
-
-***Lưu ý, Phiên bản 4.0 hiện tại chỉ có cho người biết sử dụng python và xử lý 1 folder tại 1 thời điểm. Trong phiên bản 4.1 tôi sẽ làm giao diện GUI cũng như bổ sung thêm tính năng xử lý nhiều folder.***
 
 Công cụ Python giúp **khôi phục / đồng bộ lại timestamp cho file media (ảnh, video)** được export từ **Google Takeout**, dựa trên metadata trong file JSON đi kèm.
 
@@ -414,7 +419,6 @@ MIT License
 
 * ExifTool – Phil Harvey
 * Google Takeout
-* ChatGPT
 
 ---
 
@@ -422,3 +426,5 @@ MIT License
 
 Pull Request và Issue luôn được hoan nghênh ✨
 Nếu bạn dùng tool này cho dataset lớn, đừng ngại chia sẻ benchmark!
+
+
