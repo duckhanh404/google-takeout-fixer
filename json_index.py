@@ -13,6 +13,15 @@ class JsonMeta:
     timestamp: str
 
 def build_json_index(folder: Path, json_files: set[str]):
+    """
+    Docstring for build_json_index
+    
+    :param folder: Description
+    :type folder: Path
+    :param json_files: Description
+    :type json_files: set[str]
+    return: 
+    """
     by_title: dict[str, JsonMeta] = {}
     by_prefix: dict[str, list[JsonMeta]] = {}
 
@@ -35,7 +44,6 @@ def build_json_index(folder: Path, json_files: set[str]):
             by_prefix.setdefault(prefix, []).append(meta)
 
     return by_title, by_prefix
-
 
 def find_by_prefix(media_name: str, by_prefix: dict) -> JsonMeta | None:
     base = Path(media_name).stem

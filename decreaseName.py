@@ -61,8 +61,8 @@ def find_matching_json(
     # Lấy extension của media
     media_ext = Path(media_filename).suffix.lower()
 
-    # Giảm dần từng ký tự trong media name để tìm
-    for i in range(len(base_name), 0, -1):
+    # Giảm dần từng ký tự trong media name để tìm (đảm bảo có ít nhất 5 ký tự)
+    for i in (range(len(base_name)-5), 0, -1):
         prefix = base_name[:i]
         for json_file in json_dict.keys():
             # Nằm ở đầu
