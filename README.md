@@ -190,12 +190,6 @@ python main_v4.0.py
 
 ---
 
-## 📜 License
-
-MIT License
-
----
-
 ## 🙌 Credits
 
 * ExifTool – Phil Harvey
