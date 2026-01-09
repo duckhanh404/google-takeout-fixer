@@ -1,4 +1,4 @@
-# Google Takeout Media Timestamp Fixer – v4.0
+# Google Takeout Media Timestamp Fixer – v4.1
 (Tiếng Việt ở phía dưới)
 
 **Please note that the current version 4.0 is only for Python users and can only handle one folder at a time. In version 4.1, I will create a GUI interface and add functionality for handling multiple folders.**
