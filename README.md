@@ -1,12 +1,13 @@
 # Google Takeout Media Timestamp Fixer – v4.1
 (Tiếng Việt ở phía dưới)
 
-**Please note that the current version 4.0 is only for Python users and can only handle one folder at a time. In version 4.1, I will create a GUI interface and add functionality for handling multiple folders.**
-
 A Python tool to **restore and synchronize timestamps for media files (photos & videos)** exported from **Google Takeout**, using metadata stored in the accompanying JSON files.
 
-Version **v4.0** is fully redesigned using an **index-based architecture**, optimized for:
-- Large datasets (tens of thousands of files)
+Version **v4.1** is fully redesigned using an **index-based architecture**, optimized for:
+- Supports multi-tiered directory structures
+- Moves corrupted files to the error folder
+- Optimizes the algorithm for increased accuracy
+- Large datasets (over tens of thousands of files)
 - High performance
 - Long-running stability
 
@@ -19,12 +20,12 @@ Version **v4.0** is fully redesigned using an **index-based architecture**, opti
 - ✅ Fallback to reading timestamps directly from media metadata
 - ✅ Prefix-based JSON matching for renamed / duplicated files
 - ✅ Uses **ExifTool stay_open** mode (fast & stable)
-- ✅ Unicode NFC normalization (macOS & Vietnamese filenames)
+- ✅ Unicode NFC normalization (supports unicode filenames)
 - ✅ Scales well with large Google Takeout exports
 
 ---
 
-## 🧠 Processing Architecture (v4.0)
+## 🧠 Processing Architecture (v4.1)
 
 ### Overall Pipeline
 
@@ -36,17 +37,6 @@ Version **v4.0** is fully redesigned using an **index-based architecture**, opti
 4. Phase 3: Prefix-based JSON fallback matching
 5. Write metadata using ExifTool stay_open
 
-```
-
-### Differences from v3.x
-
-| Aspect | v3.x | v4.0 |
-|-----|-----|------|
-| JSON loading | Multiple times | **Once only** |
-| Prefix matching | O(N³) | **O(N·L)** |
-| ExifTool usage | Repeated calls | **stay_open mode** |
-| Large datasets | ❌ | ✅ |
-| Stability | Medium | **High** |
 
 ---
 
@@ -55,11 +45,11 @@ Version **v4.0** is fully redesigned using an **index-based architecture**, opti
 ```
 
 .
-├── main_v4.0.py        # Entry point
+├── main_v4.1.py        # Entry point
 ├── metadata.py         # ExifTool + helpers
 ├── json_index.py       # JSON indexing & matching logic
+├── decreaseName.py		# Prefix-based JSON fallback matching
 └── README.md
-
 ````
 
 ---
@@ -101,7 +91,7 @@ The target folder must contain:
 Example:
 
 ```
-/Photos/
+/Photos/sub-folders
 ├── IMG_0001.jpg
 ├── IMG_0001.jpg.json
 ├── IMG_0002(1).jpg
@@ -112,10 +102,10 @@ Example:
 
 ### 2️⃣ Configure path
 
-Edit `main_v4.0.py`:
+Edit `main_v4.1.py`:
 
 ```python
-ROOT = Path("/path/to/google-takeout-folder")
+root_folder = Path("/path/to/google-takeout-folder")
 ```
 
 ---
@@ -123,7 +113,7 @@ ROOT = Path("/path/to/google-takeout-folder")
 ### 3️⃣ Run the script
 
 ```bash
-python main_v4.0.py
+python main_v4.1.py
 ```
 
 ---
@@ -142,7 +132,7 @@ python main_v4.0.py
 
 ### Phase 3 – Prefix Fallback
 
-* Gradually shortens filename to find a matching JSON
+* Gradually shortens filename (Maintain at least 5 characters to ensure accuracy.) to find a matching JSON 
 * Handles:
 
   * Duplicates `(1)`, `(2)`
@@ -163,30 +153,9 @@ python main_v4.0.py
 
 | Dataset size  | Time           |
 | ------------- | -------------- |
-| ~3,000 media  | ~30–40 seconds |
-| ~10,000 media | ~1–2 minutes   |
+| ~11,000 media | ~3 minutes   |
 
 (Tested on macOS M1/M2, SSD)
-
----
-
-## ❓ Why not multiprocessing?
-
-* This workload is **I/O-bound**
-* ExifTool is a subprocess → spawning multiple instances is expensive
-* Single-process + `stay_open` gives the best real-world performance
-
-👉 Multiprocessing does **not** significantly improve execution time here.
-
----
-
-## 🛠️ Future Improvements
-
-* [ ] Resume / checkpoint mode
-* [ ] Progress bar
-* [ ] CLI interface (`python fixdate.py <folder>`)
-* [ ] Trie-based prefix index
-* [ ] Multiple ExifTool pipelines
 
 ---
 
@@ -206,17 +175,17 @@ If you run this tool on very large datasets, feel free to share benchmarks!
 ========= Tiếng Việt ==========
 ===============================
 
-***Lưu ý, Phiên bản 4.0 hiện tại chỉ có cho người biết sử dụng python và xử lý 1 folder tại 1 thời điểm. Trong phiên bản 4.1 tôi sẽ làm giao diện GUI cũng như bổ sung thêm tính năng xử lý nhiều folder.***
-
 # Google Takeout Media Timestamp Fixer – v4.0
 
 Công cụ Python giúp **khôi phục / đồng bộ lại timestamp cho file media (ảnh, video)** được export từ **Google Takeout**, dựa trên metadata trong file JSON đi kèm.
 
-Phiên bản **v4.0** được thiết kế lại hoàn toàn theo **kiến trúc index**, tối ưu cho:
+Phiên bản **v4.1** được thiết kế lại hoàn toàn theo **kiến trúc index**, tối ưu cho:
 - Dataset lớn (hàng chục nghìn file)
 - Hiệu năng cao
 - Độ ổn định khi chạy lâu
-
+- Hỗ trợ cấu trúc thư mục đa tầng
+- Di chuyển file lỗi đến thư mục error
+- Tối ưu thuật toán để tăng độ chính xác
 ---
 
 ## 🚀 Tính năng chính
@@ -238,23 +207,11 @@ Phiên bản **v4.0** được thiết kế lại hoàn toàn theo **kiến trú
 
 
 Build JSON index (1 lần)
-
 - Phase 1: Match chính xác media ↔ JSON (O(1))
 - Phase 2: Đọc timestamp trực tiếp từ media EXIF
 - Phase 3: Fallback prefix match JSON
 
 Ghi metadata bằng ExifTool stay_open
-
-
-### Điểm khác biệt so với v3.x
-
-| Vấn đề       | v3.x       | v4.0               |
-| ------------ | ---------- | ------------------ |
-| Đọc JSON     | Nhiều lần  | **1 lần duy nhất** |
-| Prefix match | O(N³)      | **O(N·L)**         |
-| ExifTool     | gọi lặp    | **stay_open**      |
-| Scale lớn    | ❌          | ✅                  |
-| Độ ổn định   | Trung bình | **Cao**            |
 
 ---
 
@@ -264,6 +221,7 @@ Ghi metadata bằng ExifTool stay_open
 ├── main_v4.0.py # Entry point
 ├── metadata.py # ExifTool + helper functions
 ├── json_index.py # JSON index & matching logic
+├── decreaseName.py # Xử lý những file không có file json và matadata
 └── README.md
 ```
 
@@ -300,7 +258,7 @@ Thư mục cần xử lý phải chứa:
 
 Ví dụ:
 ```
-/Photos/
+/Photos/sub-folders
 ├── IMG_0001.jpg
 ├── IMG_0001.jpg.json
 ├── IMG_0002(1).jpg
@@ -309,14 +267,14 @@ Ví dụ:
 
 ### 2️⃣ Cấu hình đường dẫn
 
-Mở main_v4.0.py và sửa:
+Mở main_v4.1.py và sửa:
 ```
-ROOT = Path("/path/to/google-takeout-folder")
+root_folder = Path("/path/to/google-takeout-folder")
 ```
 
 ### 3️⃣ Chạy chương trình
 ```
-python main_v4.0.py
+python main_v4.1.py
 ```
 
 ## 🔍 Chi tiết các phase
@@ -344,24 +302,9 @@ python main_v4.0.py
 
 | Dataset       | Thời gian   |
 | ------------- | ----------- |
-| ~3.000 media  | ~30–40 giây |
-| ~10.000 media | ~1–2 phút   |
+| ~10.000 media | ~3 phút   |
 (macOS M1/M2, SSD)
 
-## ❓ Vì sao không dùng multiprocessing?
-
-- Bài toán này IO-bound
-- ExifTool là subprocess → spawn rất tốn thời gian
-- Single-thread + stay_open cho hiệu năng tốt nhất
-👉 Multiprocessing không mang lại lợi ích đáng kể cho trường hợp này.
-
-## 🛠️ Hướng phát triển tiếp theo
-
- - [ ] Resume mode (chạy tiếp khi bị gián đoạn)
- - [ ] Progress bar
- - [ ] CLI (python fixdate.py <folder>)
-- [ ] Trie-based prefix index
-- [ ] Multi ExifTool pipeline
 
 ## 🙌 Credits
 - ExifTool – Phil Harvey
