@@ -13,15 +13,6 @@ class JsonMeta:
     timestamp: str
 
 def build_json_index(folder: Path, json_files: set[str]):
-    """
-    Docstring for build_json_index
-    
-    :param folder: Description
-    :type folder: Path
-    :param json_files: Description
-    :type json_files: set[str]
-    return: 
-    """
     by_title: dict[str, JsonMeta] = {}
     by_prefix: dict[str, list[JsonMeta]] = {}
 
@@ -30,20 +21,32 @@ def build_json_index(folder: Path, json_files: set[str]):
         with jp.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
-        title = unicodedata.normalize("NFC", data.get("title", ""))
+        # -----------------------------------------
+        # Skip non-media JSON (album / memory)
+        # -----------------------------------------
+        try:
+            ts = extract_time_from_json(jp)
+        except ValueError:
+            continue
+
+        raw_title = data.get("title", "")
+        if not isinstance(raw_title, str):
+            continue  # media JSON luôn là str
+
+        title = unicodedata.normalize("NFC", raw_title)
+
         base = Path(title).stem
         ext = Path(title).suffix.lower()
-        ts = extract_time_from_json(jp)
 
         meta = JsonMeta(jf, title, base, ext, ts)
         by_title[title] = meta
 
-        # build prefix index
         for i in range(1, len(base) + 1):
             prefix = base[:i]
             by_prefix.setdefault(prefix, []).append(meta)
 
     return by_title, by_prefix
+
 
 def find_by_prefix(media_name: str, by_prefix: dict) -> JsonMeta | None:
     base = Path(media_name).stem

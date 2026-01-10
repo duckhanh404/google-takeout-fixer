@@ -127,18 +127,26 @@ def get_all_media(folder: Path) -> set[str]:
         if f.is_file() and f.suffix.lower() != ".json"
     }
 
-def extract_time_from_json(json_path: Path) -> str:
-    with json_path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+def extract_time_from_json(json_path: Path) -> str | None:
+    try:
+        with json_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
 
-    if "photoTakenTime" in data:
-        ts = int(data["photoTakenTime"]["timestamp"])
-    elif "creationTime" in data:
-        ts = int(data["creationTime"]["timestamp"])
-    else:
-        raise ValueError(f"No timestamp: {json_path}")
+        if "photoTakenTime" in data and "timestamp" in data["photoTakenTime"]:
+            ts = int(data["photoTakenTime"]["timestamp"])
 
-    return datetime.fromtimestamp(ts).strftime("%Y:%m:%d %H:%M:%S")
+        elif "creationTime" in data and "timestamp" in data["creationTime"]:
+            ts = int(data["creationTime"]["timestamp"])
+
+        else:
+            return None
+
+        return datetime.fromtimestamp(ts).strftime("%Y:%m:%d %H:%M:%S")
+
+    except (json.JSONDecodeError, KeyError, ValueError, OSError) as e:
+        # Có thể log nếu muốn
+        # print(f"⚠️ Skip JSON lỗi / không metadata: {json_path} ({e})")
+        return None
 
 def move_files_to_error(
     root_path: Path | str,

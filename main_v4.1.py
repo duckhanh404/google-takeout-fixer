@@ -14,7 +14,7 @@ from json_index import build_json_index, find_by_prefix
 # ================= CONFIG =================
 # English: Set your root folder here. (etc: /Users/Username/Downloads/MyPhotos)
 # Tiếng Việt: Điền thư mục của bạn vào đây. (VD: /Users/Username/Downloads/MyPhotos)
-root_folder = Path(r'/Users/hannada/Downloads/Bản sao Ảnh từ năm 2018') 
+root_folder = Path(r"E:\test lỗi đức khánh") 
 
 # ================= START ==================
 
@@ -76,7 +76,7 @@ for ROOT in folders:
     error_media = all_media - processed_media
     if len(error_media) > 0:
         print(f"⚠️  Moving {len(error_media)} unprocessed media to error folder...")
-        move_files_to_error(new_root_folder, ROOT, error_media)
+        move_files_to_error(root_folder, ROOT, error_media)
     t1 = datetime.now()
     print(f"✅ DONE for folder: {ROOT}|{len(processed_media)}/{len(all_media)}")
     print(f"Success rate: {len(processed_media)}/{len(all_media)} - Time taken: {t1 - t0}")
