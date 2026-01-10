@@ -14,12 +14,16 @@ from json_index import build_json_index, find_by_prefix
 # ================= CONFIG =================
 # English: Set your root folder here. (etc: /Users/Username/Downloads/MyPhotos)
 # Tiếng Việt: Điền thư mục của bạn vào đây. (VD: /Users/Username/Downloads/MyPhotos)
-root_folder = Path('/Path/To/Your/RootFolder') 
+root_folder = Path(r'/Users/hannada/Downloads/Bản sao Ảnh từ năm 2018') 
 
 # ================= START ==================
 
-new_root_folder = normalize_folder_names(root_folder)
-folders = get_all_subfolders(new_root_folder)
+# new_root_folder = normalize_folder_names(root_folder)
+folders = get_all_subfolders(root_folder)
+# for folder in folders:
+#     print(folder)
+# print(type(folders))
+# print(folders)
 begin_time = datetime.now()
 
 for ROOT in folders:

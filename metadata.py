@@ -16,7 +16,8 @@ class ExifToolRead:
             ["exiftool", "-stay_open", "True", "-@", "-"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8"
         )
 
     def execute(self, args: list[str]) -> list[dict]:
@@ -67,7 +68,8 @@ class ExifToolRead:
         return None
 
     def close(self):
-        self.process.stdin.write(b"-stay_open\nFalse\n")
+        # self.process.stdin.write(b"-stay_open\nFalse\n")
+        self.process.stdin.write("-stay_open\nFalse\n")
         self.process.stdin.flush()
         self.process.wait()
 
@@ -80,7 +82,8 @@ class ExifToolWrite:
             stdin=subprocess.PIPE,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            text=True
+            text=True,
+            encoding="utf-8"
         )
         self.counter = 0
 
@@ -213,54 +216,59 @@ def get_all_subfolders(
     folders.append(root_folder)
     return folders
 
+def normalize_ascii_name(name: str) -> str:
+    # Chuẩn hóa Unicode trước
+    name = unicodedata.normalize('NFC', name)
+
+    # Bỏ dấu
+    name = unicodedata.normalize('NFD', name)
+    name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
+
+    # Giữ lại ASCII
+    name = name.encode('ascii', 'ignore').decode('ascii')
+
+    # Dọn khoảng trắng
+    name = re.sub(r'\s+', ' ', name).strip()
+
+    return name
+
+
 def normalize_folder_names(folder_path: str | Path):
-    """
-    Chuyển tất cả tên thư mục (folder) trong folder_path và folder_path gốc
-    từ Unicode sang dạng ASCII "thường" để ExifTool không bị lỗi.
-    
-    Ví dụ: "Ảnh của tôi" -> "Anh cua toi"
-    
-    LƯU Ý:
-    - Chỉ rename thư mục, không động đến file bên trong.
-    """
-    folder_path = Path(folder_path)
+    folder_path = Path(folder_path).resolve()
 
-    # Duyệt folder theo chiều sâu (deepest first) để tránh lỗi rename parent trước child
+    # Rename folder con (deepest first)
     for p in sorted(folder_path.rglob('*'), key=lambda x: -len(x.parts)):
-        if p.is_dir():
-            old_name = p.name
-            new_name = unicodedata.normalize('NFD', old_name)
-            new_name = new_name.encode('ascii', 'ignore').decode('ascii')
-            new_name = re.sub(r'\s+', ' ', new_name).strip()
+        if not p.is_dir():
+            continue
 
-            if new_name != old_name and new_name:
-                new_path = p.parent / new_name
-                try:
-                    p.rename(new_path)
-                    print(f'✅ Renamed: "{old_name}" -> "{new_name}"')
-                except Exception as e:
-                    print(f'❌ Lỗi khi rename "{old_name}" -> "{new_name}": {e}')
+        old_name = p.name
+        new_name = normalize_ascii_name(old_name)
 
-    # Cuối cùng rename folder gốc nếu cần
+        if new_name and new_name != old_name:
+            new_path = p.parent / new_name
+            try:
+                p.rename(new_path)
+                print(f'✅ Renamed: "{old_name}" → "{new_name}"')
+            except Exception as e:
+                print(f'❌ Lỗi rename "{old_name}": {e}')
+
+    # Rename root cuối cùng
     old_name = folder_path.name
-    new_name = unicodedata.normalize('NFD', old_name)
-    new_name = new_name.encode('ascii', 'ignore').decode('ascii')
-    new_name = re.sub(r'\s+', ' ', new_name).strip()
+    new_name = normalize_ascii_name(old_name)
 
-    if new_name != old_name and new_name:
+    if new_name and new_name != old_name:
         new_path = folder_path.parent / new_name
         try:
             folder_path.rename(new_path)
-            print(f'✅ Renamed root: "{old_name}" -> "{new_name}"')
-            folder_path = new_path   # 🔑 cập nhật path gốc
+            print(f'✅ Renamed root: "{old_name}" → "{new_name}"')
+            return new_path
         except Exception as e:
-            print(f'❌ Lỗi khi rename root "{old_name}" -> "{new_name}": {e}')
+            print(f'❌ Lỗi rename root: {e}')
 
     return folder_path
 
 
 if __name__ == "__main__":
     root = Path('/Users/hannada/Desktop/đồng hồ')
-    subfolders = get_all_subfolders(root)
-    for folder in subfolders:
-        print(folder)
+    subfolders = normalize_folder_names(root)
+    print(f'Normalized root folder: {subfolders}')
