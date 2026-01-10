@@ -25,10 +25,10 @@ begin_time = datetime.now()
 for ROOT in folders:
     print("========================================")
     print(f"\n📁 Processing folder: {ROOT}")
-    print(f"JSON: {len(all_json)} | MEDIA: {len(all_media)}")
     t0 = datetime.now()
     all_json = get_all_json(ROOT)
     all_media = get_all_media(ROOT)
+    print(f"JSON: {len(all_json)} | MEDIA: {len(all_media)}")
     print("🔹 Building JSON index...")
     json_by_title, json_by_prefix = build_json_index(ROOT, all_json)
 
