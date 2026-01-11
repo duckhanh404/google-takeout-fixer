@@ -14,7 +14,7 @@ from json_index import build_json_index, find_by_prefix
 # ================= CONFIG =================
 # English: Set your root folder here. (etc: /Users/Username/Downloads/MyPhotos)
 # Tiếng Việt: Điền thư mục của bạn vào đây. (VD: /Users/Username/Downloads/MyPhotos)
-root_folder = Path(r"E:\test lỗi đức khánh") 
+root_folder = Path(r"E:\Takeout") 
 
 # ================= START ==================
 

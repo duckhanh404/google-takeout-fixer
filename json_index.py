@@ -18,8 +18,22 @@ def build_json_index(folder: Path, json_files: set[str]):
 
     for jf in json_files:
         jp = folder / jf
-        with jp.open("r", encoding="utf-8") as f:
-            data = json.load(f)
+
+        # -----------------------------------------
+        # Skip missing JSON files
+        # -----------------------------------------
+        if not jp.exists():
+            continue
+
+        # -----------------------------------------
+        # Load JSON safely
+        # -----------------------------------------
+        try:
+            with jp.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            # JSON hỏng / lỗi encoding
+            continue
 
         # -----------------------------------------
         # Skip non-media JSON (album / memory)
@@ -41,11 +55,13 @@ def build_json_index(folder: Path, json_files: set[str]):
         meta = JsonMeta(jf, title, base, ext, ts)
         by_title[title] = meta
 
+        # build prefix index
         for i in range(1, len(base) + 1):
             prefix = base[:i]
             by_prefix.setdefault(prefix, []).append(meta)
 
     return by_title, by_prefix
+
 
 
 def find_by_prefix(media_name: str, by_prefix: dict) -> JsonMeta | None:
